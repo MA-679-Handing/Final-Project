@@ -1,14 +1,23 @@
 ## Author: Handing Zhang
-## 1. Read in the original data.
-## 2. Basic data wrangling.
+## Purpose of the script: 1. Read in the original data.
+##                        2. Basic data wrangling.
+
+
+## Sourcing this script, one should have all data as data frames in the environment.
+## Naming Protocol:            "First Letter of the folder"_"Last three digits of the number of the mouse"
+## In each of the dataframe:   the first two columns: Response Y
+##                             the rest of the columns: Predictor X
+
+
 
 
 
 # Loading packages. ####
 pacman::p_load(R.matlab, tidyverse)
 
+
 # Reading in the data. ####
-# I sort them by four folders: 1.Data 2. Dir 3. Opp 4. Zero
+# I sort them by four folders: 1.Data(根文件夹) 2. Dir 3. Opp 4. Zero
 # Each of the later three folders contains multiple mice. I name their data by LAST THREE DIGITS of their assigned number.
 # Two types of data: 1. binned_behavior (list of 1) named by bh  2. binned_zscores. (large list) named by zs
 # Naming Protocol: Foldername_DataType_MouseNumber
@@ -165,7 +174,6 @@ D_zs_418 <- list_to_dataframe(D_zs_418, type = "zscore")
 
 
 # Opp Folder
-
 O_bh_409 <- list_to_dataframe(O_bh_409)
 O_zs_409 <- list_to_dataframe(O_zs_409, type = "zscore")
 
@@ -271,7 +279,6 @@ Z_256 <- cbind(Z_bh_256, Z_zs_256)
 Z_257 <- cbind(Z_bh_257, Z_zs_257)
 Z_258 <- cbind(Z_bh_258, Z_zs_258)
 Z_274 <- cbind(Z_bh_274, Z_zs_274)
-
 
 # Clear Environment, leaving final datasets we need. ####
 rm(list= ls()[!(ls() %in% c("Data_1", "Data_2", "D_409", "D_412", "D_414", "D_416", "D_417", "D_418", "O_409",
