@@ -17,7 +17,7 @@ pacman::p_load(R.matlab, tidyverse)
 
 
 # Reading in the data. ####
-# I sort them by four folders: 1.Data(根文件夹) 2. Dir 3. Opp 4. Zero
+# I sort them by four folders: 1.Data 2. Dir 3. Opp 4. Zero
 # Each of the later three folders contains multiple mice. I name their data by LAST THREE DIGITS of their assigned number.
 # Two types of data: 1. binned_behavior (list of 1) named by bh  2. binned_zscores. (large list) named by zs
 # Naming Protocol: Foldername_DataType_MouseNumber
@@ -120,7 +120,7 @@ Z_zs_255 <- readMat("data/Zero_Maze/619542_255/Day_1/Trial_001_0/binned_zscore.m
 
 # The data in main "Data" folder
 
-# 笨办法
+#
 # str(bh_1$binned.behavior)
 # bh_1 <- data.frame(matrix(bh_1$binned.behavior, byrow = T, nrow = 6300))
 
