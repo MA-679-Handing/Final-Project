@@ -13,7 +13,7 @@
 
 
 # Loading packages. ####
-pacman::p_load(R.matlab, tidyverse)
+pacman::p_load(R.matlab, tidyverse, magrittr)
 
 
 # Reading in the data. ####
@@ -280,7 +280,57 @@ Z_257 <- cbind(Z_bh_257, Z_zs_257)
 Z_258 <- cbind(Z_bh_258, Z_zs_258)
 Z_274 <- cbind(Z_bh_274, Z_zs_274)
 
+
+
+
+# Change the names of the first two columns to avoid duplication. ####
+v_list <-  list(D_409, D_412, D_414, D_416, D_417, D_418, Data_1, Data_2, O_409, O_412, O_414, O_416,
+                O_417, O_418, Z_251, Z_254, Z_255, Z_256, Z_257, Z_258, Z_274, Z_409, Z_412, 
+                Z_414, Z_416, Z_417, Z_418)
+
+
+for (i in 1:length(v_list)){
+  v_list[[i]] %<>%
+    dplyr::select(Y1 = 1, Y2 = 2, dplyr::everything())
+}
+
+
+D_409 <- v_list[[1]]
+D_412 <- v_list[[2]]
+D_414 <- v_list[[3]]
+D_416 <- v_list[[4]]
+D_416  <- v_list[[5]]
+D_417 <- v_list[[6]]
+D_418  <- v_list[[7]]
+Data_1  <- v_list[[8]]
+Data_2  <- v_list[[9]]
+O_409  <- v_list[[10]]
+O_412  <- v_list[[11]]
+O_414  <- v_list[[12]]
+O_416 <- v_list[[13]]
+O_417 <- v_list[[14]]
+O_418  <- v_list[[15]]
+Z_251  <- v_list[[16]]
+Z_254  <- v_list[[17]]
+Z_255 <- v_list[[18]]
+Z_256  <- v_list[[19]]
+Z_257  <- v_list[[20]]
+Z_258  <- v_list[[21]]
+Z_274  <- v_list[[22]]
+Z_412  <- v_list[[23]]
+Z_414 <- v_list[[24]]
+Z_416  <- v_list[[25]]
+Z_417  <- v_list[[26]]
+Z_418 <- v_list[[27]]
+
+
+
 # Clear Environment, leaving final datasets we need. ####
 rm(list= ls()[!(ls() %in% c("Data_1", "Data_2", "D_409", "D_412", "D_414", "D_416", "D_417", "D_418", "O_409",
 "O_412", "O_414", "O_416", "O_417", "O_418", "Z_409", "Z_412", "Z_414", "Z_416", "Z_417", "Z_418", "Z_251", "Z_254",
 "Z_255", "Z_256", "Z_257", "Z_258", "Z_274"))])
+
+
+
+
+
