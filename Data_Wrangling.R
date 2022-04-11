@@ -13,8 +13,10 @@
 
 
 # Loading packages. ####
-pacman::p_load(R.matlab, tidyverse, magrittr)
+pacman::p_load(R.matlab, tidyverse, magrittr, reshape2)
 
+library(gridExtra)
+library(corrplot)
 
 # Reading in the data. ####
 # I sort them by four folders: 1.Data 2. Dir 3. Opp 4. Zero
@@ -294,35 +296,33 @@ for (i in 1:length(v_list)){
     dplyr::select(Y1 = 1, Y2 = 2, dplyr::everything())
 }
 
-
 D_409 <- v_list[[1]]
 D_412 <- v_list[[2]]
 D_414 <- v_list[[3]]
 D_416 <- v_list[[4]]
-D_416  <- v_list[[5]]
-D_417 <- v_list[[6]]
-D_418  <- v_list[[7]]
-Data_1  <- v_list[[8]]
-Data_2  <- v_list[[9]]
-O_409  <- v_list[[10]]
-O_412  <- v_list[[11]]
-O_414  <- v_list[[12]]
-O_416 <- v_list[[13]]
-O_417 <- v_list[[14]]
-O_418  <- v_list[[15]]
-Z_251  <- v_list[[16]]
-Z_254  <- v_list[[17]]
-Z_255 <- v_list[[18]]
-Z_256  <- v_list[[19]]
-Z_257  <- v_list[[20]]
-Z_258  <- v_list[[21]]
-Z_274  <- v_list[[22]]
+D_417  <- v_list[[5]]
+D_418 <- v_list[[6]]
+Data_1  <- v_list[[7]]
+Data_2  <- v_list[[8]]
+O_409  <- v_list[[9]]
+O_412  <- v_list[[10]]
+O_414  <- v_list[[11]]
+O_416  <- v_list[[12]]
+O_417 <- v_list[[13]]
+O_418 <- v_list[[14]]
+Z_251  <- v_list[[15]]
+Z_254  <- v_list[[16]]
+Z_255  <- v_list[[17]]
+Z_256 <- v_list[[18]]
+Z_257  <- v_list[[19]]
+Z_258  <- v_list[[20]]
+Z_274  <- v_list[[21]]
+Z_409  <- v_list[[22]]
 Z_412  <- v_list[[23]]
 Z_414 <- v_list[[24]]
 Z_416  <- v_list[[25]]
 Z_417  <- v_list[[26]]
 Z_418 <- v_list[[27]]
-
 
 
 # Clear Environment, leaving final datasets we need. ####
@@ -331,6 +331,50 @@ rm(list= ls()[!(ls() %in% c("Data_1", "Data_2", "D_409", "D_412", "D_414", "D_41
 "Z_255", "Z_256", "Z_257", "Z_258", "Z_274"))])
 
 
+# Convert each data frame into long format to make box plots. ####
+v_list <-  list(D_409, D_412, D_414, D_416, D_417, D_418, Data_1, Data_2, O_409, O_412, O_414, O_416,
+                O_417, O_418, Z_251, Z_254, Z_255, Z_256, Z_257, Z_258, Z_274, Z_409, Z_412, 
+                Z_414, Z_416, Z_417, Z_418)
 
+for (i in 1:length(v_list)){
+    v_list[[i]] %<>% melt(id=c("Y1","Y2"))
+}
+
+D_409l <- v_list[[1]]
+D_412l <- v_list[[2]]
+D_414l <- v_list[[3]]
+D_416l <- v_list[[4]]
+D_417l  <- v_list[[5]]
+D_418l <- v_list[[6]]
+Data_1l  <- v_list[[7]]
+Data_2l  <- v_list[[8]]
+O_409l  <- v_list[[9]]
+O_412l  <- v_list[[10]]
+O_414l  <- v_list[[11]]
+O_416l  <- v_list[[12]]
+O_417l <- v_list[[13]]
+O_418l <- v_list[[14]]
+Z_251l  <- v_list[[15]]
+Z_254l  <- v_list[[16]]
+Z_255l  <- v_list[[17]]
+Z_256l <- v_list[[18]]
+Z_257l  <- v_list[[19]]
+Z_258l  <- v_list[[20]]
+Z_274l  <- v_list[[21]]
+Z_409l  <- v_list[[22]]
+Z_412l  <- v_list[[23]]
+Z_414l <- v_list[[24]]
+Z_416l  <- v_list[[25]]
+Z_417l  <- v_list[[26]]
+Z_418l <- v_list[[27]]
+
+
+plot <- function(x){
+  plot1 <-  ggplot(x, aes(x = variable, y = value, color = as.factor(Y1))) +
+    geom_boxplot() + labs(title="boxplot for Y1", x="variable x", y="value of x", colour="Y1")
+  plot2 <-  ggplot(x, aes(x = variable, y = value, color = as.factor(Y2))) +
+    geom_boxplot() + labs(title="boxplot for Y2", x="variable x", y="value of x", colour="Y2")
+  grid.arrange(plot1, plot2, nrow = 2, ncol = 1)
+}
 
 
