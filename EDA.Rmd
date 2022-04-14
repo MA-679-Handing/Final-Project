@@ -1,0 +1,118 @@
+---
+title: "EDA"
+author: "Handing Zhang"
+date: "4/4/2022"
+output: pdf_document
+---
+
+Source necessary scripts.
+```{r}
+source("Data_Wrangling.R")
+```
+
+
+# First we want to see if there are any missing values in our data and where are them
+
+
+```{r include=FALSE}
+missing_value <- function(df){
+  x1 <- sum(is.na(df))
+  print(paste("There are ", x1, " missing values in the dataset"))
+  x2 <- which(is.na(df), arr.ind = T) 
+  print("The positions of them are: ")
+  print(x2)
+}
+
+missing_value(D_409)
+md.pattern(D_409)
+
+```
+Applying the function to all dataframes we found that only D_409 contains 71 missing values.
+distributed such that there is exactly one in each column from column 3 to column 73.
+
+
+# Draw time series graphs by seconds
+
+```{r Function: Add second as time index}
+add_second <- function(df){
+  
+    # Create a substitue
+  df1 <- df
+  
+    # Add time index every ten rows
+  df1$time_index_ten <- c(0, 1:(nrow(df1) - 1) %/% 10)
+
+  return(df1)
+}
+
+
+```
+
+
+```{r Function: Draw time series for Y1 Y2 by second}
+
+
+plot_by_second <- function(df1){
+  
+  df2 <- df1 %>% 
+    group_by(time_index_ten) %>% 
+    summarise(sum_Y1 = sum(Y1), sum_Y2 = sum(Y2))
+  
+     plot(df2$time_index_ten,                              # Draw first time series
+     df2$sum_Y1,
+     type = "l",
+     col = 2,
+     xlab = "Time by Seconds",
+     ylab = "Time spent in the behavior")
+  lines(df2$time_index_ten,                             # Draw second time series
+      df2$sum_Y2,
+      type = "l",
+      col = 3)
+  legend("bottomleft",                           # Add legend to plot
+       c("Behavior 1", "Behavior 2"),
+       lty = 1,
+       col = 2:3,)
+}
+
+```
+
+
+
+
+## Pick one mouse from each experiment.
+
+
+
+```{r}
+par(mfrow = c(1,1))
+
+plot_by_second(add_second(Data_1))
+plot_by_second(add_second(D_409))
+plot_by_second(add_second(O_409))
+plot_by_second(add_second(Z_409))
+
+```
+
+
+```{r}
+plot_by_second(add_second(D_412))
+plot_by_second(add_second(D_414))
+plot_by_second(add_second(D_416))
+plot_by_second(add_second(O_414))
+plot_by_second(add_second(O_418))
+plot_by_second(add_second(Z_418))
+plot_by_second(add_second(Z_256))
+```
+
+
+```{r}
+
+glimpse(O_409)
+
+
+```
+
+
+
+
+
