@@ -112,7 +112,7 @@ Z_bh_255 <- readMat("data/Zero_Maze/619542_255/Day_1/Trial_001_0/binned_behavior
 Z_zs_255 <- readMat("data/Zero_Maze/619542_255/Day_1/Trial_001_0/binned_zscore.mat")
 
 
-
+ 
 ## Convert data from list into data frames. ####
 ## Notice proper column names are to be assigned into the converted data frames later.
 ## Observe that the original data are all list of length of 1, where the one object is the our data.
