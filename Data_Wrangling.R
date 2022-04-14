@@ -13,7 +13,7 @@
 
 
 # Loading packages. ####
-pacman::p_load(R.matlab, tidyverse, magrittr)
+pacman::p_load(R.matlab, tidyverse, magrittr, mice, reshape)
 
 
 # Reading in the data. ####
@@ -299,29 +299,33 @@ D_409 <- v_list[[1]]
 D_412 <- v_list[[2]]
 D_414 <- v_list[[3]]
 D_416 <- v_list[[4]]
-D_416  <- v_list[[5]]
-D_417 <- v_list[[6]]
-D_418  <- v_list[[7]]
-Data_1  <- v_list[[8]]
-Data_2  <- v_list[[9]]
-O_409  <- v_list[[10]]
-O_412  <- v_list[[11]]
-O_414  <- v_list[[12]]
-O_416 <- v_list[[13]]
-O_417 <- v_list[[14]]
-O_418  <- v_list[[15]]
-Z_251  <- v_list[[16]]
-Z_254  <- v_list[[17]]
-Z_255 <- v_list[[18]]
-Z_256  <- v_list[[19]]
-Z_257  <- v_list[[20]]
-Z_258  <- v_list[[21]]
-Z_274  <- v_list[[22]]
+D_417 <- v_list[[5]]
+D_418  <- v_list[[6]]
+Data_1  <- v_list[[7]]
+Data_2  <- v_list[[8]]
+O_409  <- v_list[[9]]
+O_412  <- v_list[[10]]
+O_414  <- v_list[[11]]
+O_416 <- v_list[[12]]
+O_417 <- v_list[[13]]
+O_418  <- v_list[[14]]
+Z_251  <- v_list[[15]]
+Z_254  <- v_list[[16]]
+Z_255 <- v_list[[17]]
+Z_256  <- v_list[[18]]
+Z_257  <- v_list[[19]]
+Z_258  <- v_list[[20]]
+Z_274  <- v_list[[21]]
+Z_409  <- v_list[[22]]
 Z_412  <- v_list[[23]]
 Z_414 <- v_list[[24]]
 Z_416  <- v_list[[25]]
 Z_417  <- v_list[[26]]
 Z_418 <- v_list[[27]]
+
+
+
+
 
 
 
