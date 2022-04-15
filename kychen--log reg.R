@@ -62,3 +62,72 @@ table_cm
 
 accuracy_Test <- sum(diag(table_cm)) / sum(table_cm)
 accuracy_Test
+
+
+
+
+
+
+
+#L2 logistic regression
+library(tidyverse)
+library(caret)
+library(glmnet)
+#split the data into training and test set
+set.seed(2022)
+training.samples <- Z_416_modify$Y %>% 
+  createDataPartition(p = 0.8, list = FALSE)
+train.data  <- Z_416_modify[training.samples, ]
+test.data <- Z_416_modify[-training.samples, ]
+
+# Create model matrix
+x <- model.matrix(Y~., train.data)[,-1]
+y <- train.data$Y
+
+#Find the appropriate tuning parameter
+cv.ridge <- cv.glmnet(x, y, alpha = 0, family = "binomial")
+
+plot(cv.ridge)
+coef(cv.ridge)
+# Fit the final model on the training data
+model <- glmnet(x, y, alpha = 0, family = "binomial",
+                lambda = cv.ridge$lambda.min)
+
+# Display regression coefficients
+coef(model)
+
+# Make predictions on the test data
+x.test <- model.matrix(Y ~., test.data)[,-1]
+probabilities <- model %>% predict(newx = x.test)
+predicted.classes <- ifelse(probabilities > 0.5, 1, 0)
+
+# Model accuracy
+observed.classes <- test.data$Y
+mean(predicted.classes == observed.classes)
+
+
+
+
+
+
+
+
+#Lasso
+cv.lasso <- cv.glmnet(x, y, alpha = 1, family = "binomial")
+best_lambda<-cv.lasso$lambda.min
+best_lambda
+
+#0.00204
+
+plot(cv.lasso)
+
+lasso_z416<-glmnet(x, y, alpha = 1, lambda=best_lambda,family="binomial")
+coef(lasso_z416)
+
+#27 x 1 sparse Matrix of class "dgCMatrix"
+
+#x1,x6,x9,x10,x12,x18,x25 as non-sparse elements
+
+#Then L2 regularization 
+
+
