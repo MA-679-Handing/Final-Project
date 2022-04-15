@@ -5,8 +5,11 @@
 
 ## Sourcing this script, one should have all data as data frames in the environment.
 ## Naming Protocol:            "First Letter of the folder"_"Last three digits of the number of the mouse"
-## In each of the dataframe:   the first two columns: Response Y
-##                             the rest of the columns: Predictor X
+## In each of the dataframe:   the first column: combined Y: 1:first behavior
+##                                                           0:second behavior
+##                                                           2:Both
+##                             the 2:3 columns:              Response Y
+##                             the rest of the columns:      Predictor X
 
 # Loading packages. ####
 pacman::p_load(R.matlab, tidyverse, magrittr, mice, reshape, stringr)
@@ -36,6 +39,15 @@ for (i in 1:length(mice_name_Z)){
   temp %<>% 
     rename_at(vars(starts_with("V")), funs(str_replace(., "V", replacement = "X")))
   
+  # Combine Y1 Y2 into Y, so we only need to analyze one output.
+  temp %<>% 
+    unite(col = "Y", Y1:Y2, remove = F, sep = "")
+  # Drop all 00 rows since that is due to device failure.
+    temp %<>% 
+      filter(Y != "00")
+    temp %<>% 
+      mutate(Y =recode(Y, '01' = 0, '10' = 1, '11' = 2 ))
+
   assign(name, temp)
   
   # remove temp from environment
@@ -67,6 +79,16 @@ for (i in 1:length(mice_name_D)){
   dimnames(temp)[[2]][1:2] <- c("Y1", "Y2")
   temp %<>% 
     rename_at(vars(starts_with("V")), funs(str_replace(., "V", replacement = "X")))
+  
+  
+  # Combine Y1 Y2 into Y, so we only need to analyze one output.
+  temp %<>% 
+    unite(col = "Y", Y1:Y2, remove = F, sep = "")
+  # Drop all 00 rows since that is due to device failure.
+  temp %<>% 
+    filter(Y != "00")
+  temp %<>% 
+    mutate(Y =recode(Y, '01' = 0, '10' = 1, '11' = 2 ))
   
   assign(name, temp)
   
@@ -101,6 +123,16 @@ for (i in 1:2){
   temp %<>% 
     rename_at(vars(starts_with("V")), funs(str_replace(., "V", replacement = "X")))
   
+  
+  # Combine Y1 Y2 into Y, so we only need to analyze one output.
+  temp %<>% 
+    unite(col = "Y", Y1:Y2, remove = F, sep = "")
+  # Drop all 00 rows since that is due to device failure.
+  temp %<>% 
+    filter(Y != "00")
+  temp %<>% 
+    mutate(Y =recode(Y, '01' = 0, '10' = 1, '11' = 2 ))
+  
   assign(name, temp)
   
   # remove temp from environment
@@ -124,6 +156,15 @@ for (i in 3:6){
     rename_at(vars(starts_with("V")), funs(str_replace(., "V", replacement = "X")))
   
   
+  # Combine Y1 Y2 into Y, so we only need to analyze one output.
+  temp %<>% 
+    unite(col = "Y", Y1:Y2, remove = F, sep = "")
+  # Drop all 00 rows since that is due to device failure.
+  temp %<>% 
+    filter(Y != "00")
+  temp %<>% 
+    mutate(Y =recode(Y, '01' = 0, '10' = 1, '11' = 2))
+  
   assign(name, temp)
   
   # remove temp from environment
@@ -136,5 +177,11 @@ for (i in 3:6){
 rm(list= ls()[!(ls() %in% c("Data_1", "Data_2", "D_409", "D_412", "D_414", "D_416", "D_417", "D_418", "O_409",
                             "O_412", "O_414", "O_416", "O_417", "O_418", "Z_409", "Z_412", "Z_414", "Z_416", "Z_417", "Z_418", "Z_251", "Z_254",
                             "Z_255", "Z_256", "Z_257", "Z_258", "Z_274"))])
+
+
+
+
+
+
 
 

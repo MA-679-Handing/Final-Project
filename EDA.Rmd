@@ -107,9 +107,13 @@ plot_by_second(add_second(Z_256))
 
 ```{r}
 
-glimpse(O_409)
+library(corrplot)
+corrplot(cor(Z_416[,4:29]), type = "upper", order = "hclust", 
+         tl.col = "black", tl.srt = 45)
 
 
+corrplot(cor(Z_416[,2:29]), type = "upper", order = "hclust", 
+         tl.col = "black", tl.srt = 45)
 ```
 
 
