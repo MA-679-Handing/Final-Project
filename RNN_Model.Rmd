@@ -76,19 +76,27 @@ lag_gene(Z_416, L = 6)
 ```
 
 
-```{r create a list containing data frame with different number of steps of lags. We choose the range of 1 to 100 lags}
+```{r create a list containing data frame with different number of steps of lags. We choose the range of 1 to 20 steps lags}
 
 lag_list_gene <- function(df){
   Lag_List <- list()
-  for (i in c(1:100)){
-  Lag_List[i] <- lag_gene(df, i)
+  for (i in c(1:20)){
+  Lag_List[[i]] <- lag_gene(df, i)[-c(1:i),] ## here we use index to get rid of NA created by above steps.
   }
   return(Lag_List)
 }
-lag_gene(Z_416,1)
-lag_list_gene(Z_416)
-```
 
+Z_416_AR_List <- lag_list_gene(Z_416)
+
+## to demonstrate.
+dim(Z_416_AR_List[[1]]) #1 step back to predict
+dim(Z_416_AR_List[[2]]) #2 steps back to predict
+dim(Z_416_AR_List[[3]]) #3 steps back to predict
+dim(Z_416_AR_List[[4]]) #4 steps back to predict
+# As i goes up.
+# each time we delete one more row since one more row contains NA.
+# each time we have 26 more features. the neurons from one more time step backwards.
+```
 
 
 ```{r}
