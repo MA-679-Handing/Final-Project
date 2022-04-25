@@ -72,7 +72,6 @@ lag_gene <- function(df, L){
   return(temp)
 }
 
-lag_gene(Z_416, L = 6)
 ```
 
 
@@ -99,7 +98,7 @@ dim(Z_416_AR_List[[4]]) #4 steps back to predict
 ```
 
 
-```{r}
+```{r egggggggggggggggggg}
 arframe <- data.frame(log_volume = xdata[, "log_volume"],
    L1 = lagm(xdata, 1), L2 = lagm(xdata, 2),
    L3 = lagm(xdata, 3), L4 = lagm(xdata, 4),
@@ -113,7 +112,7 @@ If we look at the first five rows of this frame, we will see some
 missing values in the lagged variables (due to the construction above). We remove these rows, and adjust `istrain`
 accordingly.
 
-```{r}
+```{r egggggggggggggggggg}
 arframe <- arframe[-(1:5), ]
 istrain <- istrain[-(1:5)]
 ```
@@ -124,8 +123,48 @@ test data.
 ```{r}
 arfit <- lm(log_volume ~ ., data = arframe[istrain, ])
 arpred <- predict(arfit, arframe[!istrain, ])
+
+
+
+
 V0 <- var(arframe[!istrain, "log_volume"])
 1 - mean((arpred - arframe[!istrain, "log_volume"])^2) / V0
+
+```
+
+
+```{r Logistic AR model. predict on the last 20% of the test data.}
+
+j <-  2
+
+train <- Z_416_AR_List[[j]][c(1:floor(0.8 * nrow(Z_416_AR_List[[j]]))), ] 
+test <- Z_416_AR_List[[j]][-c(1:floor(0.8 * nrow(Z_416_AR_List[[j]]))), ]
+
+
+arfit <- glm(Y ~ ., data = train, family = "binomial")
+arpred <- predict(arfit, test, type = "response")
+arpred
+arpred <- ifelse(arpred > 0.5, 1, 0)
+arpred
+
+mean(arpred == test[, "Y"] )
+
+
+
+# V0 <- var(test[, "Y"])
+# 
+# 1 - mean((arpred - test[,"Y"])^2) / V0
+
+
+
+sum(arpred)
+length(test[,"Y"])
+mean((arpred - test[,"Y"])^2) / V0
+
+Z_416_AR_List[[2]][-c(1:floor(0.8 * nrow(Z_416_AR_List[[2]]))), "Y"] %>% class()
+
+Z_416_AR_List[[2]][-c(1:floor(0.8 * nrow(Z_416_AR_List[[2]]))), "Y"] %>% class()
+Z_416_AR_List[[2]][-c(1:2),] %>% class()
 ```
 
 The last two lines compute the $R^2$ on the test data, as defined in (3.17).
@@ -140,6 +179,8 @@ arframed <-
 arfitd <- lm(log_volume ~ ., data = arframed[istrain, ])
 arpredd <- predict(arfitd, arframed[!istrain, ])
 1 - mean((arpredd - arframe[!istrain, "log_volume"])^2) / V0
+
+
 ```
 
 To fit the RNN, we need to reshape these data, since it expects a
