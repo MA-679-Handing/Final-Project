@@ -14,7 +14,7 @@ Z_416 <- Z_416 %>% select(-c(Y1, Y2))
 ```
 
 
-```{r}
+```{r egggggggggggggggggggggggg}
 library(ISLR2)
 library(magrittr)
 library(keras)
@@ -120,7 +120,7 @@ istrain <- istrain[-(1:5)]
 We now fit the linear AR model to the training data using `lm()`, and predict on the
 test data.
 
-```{r}
+```{r egggggggggggggggggg}
 arfit <- lm(log_volume ~ ., data = arframe[istrain, ])
 arpred <- predict(arfit, arframe[!istrain, ])
 
@@ -134,37 +134,40 @@ V0 <- var(arframe[!istrain, "log_volume"])
 
 
 ```{r Logistic AR model. predict on the last 20% of the test data.}
+## A function that fits AR model for the data with number of steps we look back ranging from 1 to 20 and compare them in terms of testing accuracy with the last 20% of time.
 
-j <-  2
+AR_logistic <- function(df){
+  acc <- c()
+  df <- lag_list_gene(df)
+    for (i in c(1:20)){
+      
+    # Prepare the training set(first 80% of rows) and testing set(the rest)
+      train_ind <- c(1:floor( 0.8 * nrow(df[[i]]) )  )
+      train <- df[[i]][train_ind, ]
+      test <- df[[i]][-train_ind, ]
+      
+      arfit <- glm(Y ~ ., data = train, family = "binomial")
+      arpred <- predict(arfit, test, type = "response")
+      arpred <- ifelse(arpred > 0.5, 1, 0)
+      acc <- append(acc ,mean(arpred == test[, "Y"] ))
+    }
+  return(acc)
+} 
+# This iterating fitting process takes around 1 minute on my laptop.
+Z_416_AR <-  as.data.frame(cbind(acc = AR_logistic(Z_416), steps = c(1:20))) # 50s
+Z_416_AR
 
-train <- Z_416_AR_List[[j]][c(1:floor(0.8 * nrow(Z_416_AR_List[[j]]))), ] 
-test <- Z_416_AR_List[[j]][-c(1:floor(0.8 * nrow(Z_416_AR_List[[j]]))), ]
+# Plot the relationship
+Z_416_AR %>% 
+  ggplot(aes(x = steps, y = acc)) + 
+  geom_point() + 
+  geom_line() +
+  labs(title = "Prediction Accuracy vs Number of steps back", subtitle = "Z_416")
 
-
-arfit <- glm(Y ~ ., data = train, family = "binomial")
-arpred <- predict(arfit, test, type = "response")
-arpred
-arpred <- ifelse(arpred > 0.5, 1, 0)
-arpred
-
-mean(arpred == test[, "Y"] )
-
-
-
-# V0 <- var(test[, "Y"])
-# 
-# 1 - mean((arpred - test[,"Y"])^2) / V0
-
-
-
-sum(arpred)
-length(test[,"Y"])
-mean((arpred - test[,"Y"])^2) / V0
-
-Z_416_AR_List[[2]][-c(1:floor(0.8 * nrow(Z_416_AR_List[[2]]))), "Y"] %>% class()
-
-Z_416_AR_List[[2]][-c(1:floor(0.8 * nrow(Z_416_AR_List[[2]]))), "Y"] %>% class()
-Z_416_AR_List[[2]][-c(1:2),] %>% class()
+## I try to fit the model for other larger mice datasets. But the running time is too long. I temporarily forfeit that plan.
+# AR_logistic(Z_412) 
+# AR_logistic(Z_414)
+# AR_logistic(Z_417)
 ```
 
 The last two lines compute the $R^2$ on the test data, as defined in (3.17).
@@ -296,6 +299,3 @@ plot(history)
 npred <- predict(arnnd, x[!istrain, ])
 1 - mean((arframe[!istrain, "log_volume"] - npred)^2) / V0
 ```
-
-
-
