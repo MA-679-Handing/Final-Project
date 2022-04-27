@@ -165,14 +165,16 @@ dim(Z_416_AR_List[[5]])
 
 
 model <- keras_model_sequential() %>%
-   layer_simple_rnn(units = 5, ## number of steps we look back
-      input_shape = list(5,ncol(Z_416_AR_List[[5]]) - 1 ),
-      dropout = 0.1, recurrent_dropout = 0.1) %>%
-   layer_lstm(units = 32) %>%
+   layer_simple_rnn(units = 10, ## number of steps we look back
+                    input_shape = list(5, ncol(Z_416_AR_List[[5]]) - 1),
+                    dropout = 0.1, recurrent_dropout = 0.1) %>%
    layer_dense(units = 1, activation = "sigmoid")
+
 
 model %>% compile(optimizer = optimizer_rmsprop(),
     loss = "binary_crossentropy")
+
+
 ```
  ############################################
  
@@ -218,10 +220,10 @@ early stopping, since then the test performance would be biased.
 ```{r}
 train_ind <- c(1:floor( 0.8 * nrow(Z_416_AR_List[[5]]) ) )
 
-history <- model2 %>% fit(
+history <- model %>% fit(
     xrnn[train_ind,, ], Z_416_AR_List[[5]][train_ind, "Y"],
 #    batch_size = 64, epochs = 200,
-    batch_size = 64, epochs = 75,
+    batch_size = 64, epochs = 200,
     validation_data =
       list(xrnn[-train_ind,, ], Z_416_AR_List[[5]][-train_ind, "Y"])
   )
