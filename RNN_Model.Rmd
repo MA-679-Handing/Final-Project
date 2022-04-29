@@ -138,10 +138,10 @@ time series going back $L$ time points.
 
 ```{r Here I will pick the 5 steps lagged dataframe to fit the model}
 
-
+z<-Z_416_AR_List[[5]]
 n <- nrow(Z_416_AR_List[[5]])
 xrnn <- data.matrix(Z_416_AR_List[[5]][, -1])
-xrnn <- array(xrnn, c(n, ncol(Z_416_AR_List[[5]]) - 1, 5))
+xrnn <- array(xrnn, c(n, 26, 5))
 xrnn <- xrnn[,, 5:1]
 xrnn <- aperm(xrnn, c(1, 3, 2))
 dim(xrnn)
@@ -161,18 +161,17 @@ expects.
 Now we are ready to proceed with the RNN, which uses 12 hidden units.
 
 ```{r}
-dim(Z_416_AR_List[[5]])
-
 
 model <- keras_model_sequential() %>%
    layer_simple_rnn(units = 10, ## number of steps we look back
-                    input_shape = list(5, ncol(Z_416_AR_List[[5]]) - 1),
+                    input_shape = list(5, 26),
                     dropout = 0.1, recurrent_dropout = 0.1) %>%
-   layer_dense(units = 1, activation = "sigmoid")
+   layer_dense(units = 50, activation = "relu")%>%
+  layer_dense(units=1, activation="sigmoid")
 
 
 model %>% compile(optimizer = optimizer_rmsprop(),
-    loss = "binary_crossentropy")
+    loss = "binary_crossentropy", metrics=c("accuracy"))
 
 
 ```
@@ -219,6 +218,17 @@ early stopping, since then the test performance would be biased.
 
 ```{r}
 train_ind <- c(1:floor( 0.8 * nrow(Z_416_AR_List[[5]]) ) )
+
+history <- model %>% fit(
+    xrnn[train_ind,, ], z[train_ind, "Y"],
+#    batch_size = 64, epochs = 200,
+    batch_size = 64, epochs = 200,
+    validation_data =
+      list(xrnn[-train_ind,, ], z[-train_ind, "Y"])
+  )
+kpred <-ifelse(predict(model, xrnn[-train_ind,, ])>0.5,1,0)
+mean(kpred == z[-train_ind, "Y"])
+
 
 history <- model %>% fit(
     xrnn[train_ind,, ], Z_416_AR_List[[5]][train_ind, "Y"],
