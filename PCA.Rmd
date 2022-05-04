@@ -1,0 +1,59 @@
+---
+title: "PCA"
+author: "Handing Zhang"
+date: "5/4/2022"
+output: html_document
+---
+
+
+```{r}
+source("Data_Wrangling.R")
+```
+
+
+```{r}
+apply(Z_416, 2, var)
+```
+
+```{r chunk5}
+pr.out1 <- prcomp(Z_412[,-c(1:3)])
+```
+
+
+```{r}
+names(pr.out1)
+```
+
+```{r}
+pr.out1$rotation
+```
+
+
+```{r}
+dim(pr.out1$x)
+
+```
+
+
+
+```{r}
+pr.out1$sdev
+
+```
+
+
+```{r}
+pr.var1 <- pr.out1$sdev^2
+pr.var1
+```
+
+
+```{r chunk14}
+pve1 <- pr.var1 / sum(pr.var1)
+pve
+sum(pve1[1:26])
+```
+
+
+
+
