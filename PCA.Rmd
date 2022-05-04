@@ -11,9 +11,180 @@ source("Data_Wrangling.R")
 ```
 
 
-```{r}
-apply(Z_416, 2, var)
+
+```{r function for pca Matrix Mult By Hand}
+num_pc <- 25
+
+
+# Function Input: dataset
+# Function Output: Matrix of Principle Components with coefficients for each PC.
+
+pca_first_n <- function(df){
+  pr.out <- prcomp(df[, -c(1:3)])
+  out1 <- pr.out$rotation 
+  
+  pr.var <- pr.out$sdev^2
+  pve <- pr.var / sum(pr.var)
+  out2 <- pve
+  
+  out3 <- sum(pve[1:num_pc])
+  # print(out1)
+  # print(out2)
+  # print(out3)
+  return(out1)
+} 
+
+# pca_first_n(Z_255)
+# pca_first_n(Z_256)
+# pca_first_n(Z_257)
+# pca_first_n(Z_258)
+# pca_first_n(Z_274)
+# pca_first_n(Z_409)
+# pca_first_n(Z_412)
+# pca_first_n(Z_414)
+
+
+
+
+matrix(Z_416[,-c(1:3)], nrow = nrow(Z_416))
+
+
+aaa <- as.matrix(Z_416[,-c(1:3)])
+bbb <- as.matrix(pca_first_n(Z_416))
+
+temp <- aaa %*% bbb[, c(1:15)]
+
+
+bbb[, c(1:15)] %>% dim()
+aaa %>% dim()
+temp %>% dim()
+temp <- as.data.frame(cbind(Z_416[,1], temp))
+dimnames(temp)[[2]][1] <- "Y"
+
+temp %>% head()
 ```
+
+
+
+```{r}
+# Function Input: dataframe of a mouse.
+# Function Output: dataframe of the mouse with first column the response, rest of columns the PC values.
+
+# number of first n pc we look at defined here.
+num_PC <- 15
+
+PCA_wrangle <- function(df){
+  a <- as.matrix(df[, -c(1:3)])
+  b <- as.matrix(pca_first_n(df))
+  name <- paste0(deparse(substitute(df)), "_PCA_", num_PC)
+  temp <- as.data.frame(cbind(df[,1], a %*% b[, c(1:num_PC)]))
+  dimnames(temp)[[2]][1] <- "Y"
+  assign(name, temp,envir = globalenv())
+}
+
+
+
+```
+
+
+AR 412
+```{r}
+Z_412_AR_List <- lag_list_gene(PCA_wrangle(Z_412))
+
+Z_412_AR <-  as.data.frame(cbind(acc = AR_logistic(Z_412_PCA_15), steps = c(1:20))) # 50s
+
+Z_412_AR_List[[1]] %>% dim()
+Z_412_AR_List[[2]] %>% dim()
+Z_412_AR_List[[3]] %>% dim()
+Z_412_AR_List[[1]] %>% dim()
+
+```
+
+
+temp
+```{r}
+PCA_wrangle(Z_409)
+PCA_wrangle(Z_257)
+PCA_wrangle(Z_274)
+PCA_wrangle(Z_258)
+PCA_wrangle(Z_251)
+PCA_wrangle(Z_412)
+
+
+temp <-  as.data.frame(cbind(acc = AR_logistic(Z_258_PCA_15), steps = c(1:20))) # 50s
+
+# Plot the relationship
+temp %>% 
+  ggplot(aes(x = steps, y = acc)) + 
+  geom_point() + 
+  geom_line() +
+  labs(title = "Prediction Accuracy vs Number of steps back", subtitle = "Z_258")
+
+
+
+
+
+AR_logistic111 <- function(df, test_df){
+  acc <- c()
+  df <- lag_list_gene(df)
+  df2 <- lag_list_gene(test_df)
+    for (i in c(1:20)){
+      
+    # Prepare the training set(first 80% of rows) and testing set(the rest)
+      train_ind <- c(1:floor( 0.8 * nrow(df[[i]]) )  )
+      train <- df[[i]][train_ind, ]
+      test <- df2[[i]]
+      
+      arfit <- glm(Y ~ ., data = train, family = "binomial")
+      arpred <- predict(arfit, test, type = "response")
+      arpred <- ifelse(arpred > 0.5, 1, 0) # The threshold might be improved by methods like ROC.
+      acc <- append(acc ,mean(arpred == test[, "Y"] ))
+    }
+  return(acc)
+} 
+
+
+lag_list_gene(Z_416_PCA_15)[[1]]
+PCA_wrangle(Z_418)
+# PCA_wrangle(Z_416)
+temp <-  as.data.frame(cbind(acc = AR_logistic111(Z_416_PCA_15, test_df = Z_418_PCA_15), steps = c(1:20))) # 50s
+temp1<-  as.data.frame(cbind(acc = AR_logistic(Z_418_PCA_15), steps = c(1:20))) # 50s
+
+
+# Plot the relationship
+temp %>% 
+  ggplot(aes(x = steps, y = acc)) + 
+  geom_point() + 
+  geom_line() +
+  labs(title = "Prediction Accuracy vs Number of steps back", subtitle = "Z_418")
+
+
+temp1 %>% 
+  ggplot(aes(x = steps, y = acc)) + 
+  geom_point() + 
+  geom_line() +
+  labs(title = "Prediction Accuracy vs Number of steps back", subtitle = "Z_418")
+
+
+```
+
+
+
+
+```{r}
+# This iterating fitting process takes around 1 minute on my laptop.
+Z_412_AR <-  as.data.frame(cbind(acc = AR_logistic(Z_412), steps = c(1:20))) # 50s
+Z_412_AR
+
+# Plot the relationship
+Z_412_AR %>% 
+  ggplot(aes(x = steps, y = acc)) + 
+  geom_point() + 
+  geom_line() +
+  labs(title = "Prediction Accuracy vs Number of steps back", subtitle = "Z_412")
+
+```
+
 
 ```{r chunk5}
 pr.out1 <- prcomp(Z_412[,-c(1:3)])
@@ -31,6 +202,7 @@ pr.out1$rotation
 
 ```{r}
 dim(pr.out1$x)
+
 
 ```
 
@@ -52,6 +224,17 @@ pr.var1
 pve1 <- pr.var1 / sum(pr.var1)
 pve
 sum(pve1[1:26])
+```
+
+
+
+
+
+
+```{r}
+aaa <- ls()
+
+aaa[-c("pve")]
 ```
 
 
