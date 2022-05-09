@@ -28,5 +28,5 @@ PCA_wrangle_sf <- function(df){
   assign(name, temp,envir = globalenv())
   #return(name)
 }
-# PCA_wrangle(Z_416)
+# PCA_wrangle_sf(Z_416)
 
