@@ -6,13 +6,74 @@ output: html_document
 ---
 
 
-```{r}
+```{r Data import and package loading.}
 source("Data_Wrangling.R")
+pacman::p_load(ISLR2,keras,tidyverse,magrittr,ggplot2, ggpubr)
+set.seed(100)
+```
+
+
+Funcions we need for wrangling.
+```{r Funcions we need for wrangling.}
+# a function that takes dataframe x and spit it with k rows of lags. (Intuitively the dataframe moved downwards by k steps with NA rows as its foot prints.
+lagm <- function(x, k = 1) {
+   n <- nrow(x)
+   pad <- matrix(NA, k, ncol(x))
+   colnames(pad) <- colnames(x)
+   rbind(pad, x[1:(n - k), ])
+}
+
+
+
+# Make sure the input dataframe contains column "Y", our response!
+lag_gene <- function(df, L){
+  temp <- data.frame(Y = df[,"Y"])
+  for(i in c(1:L)){
+    # name <- paste0("L", i)
+    # assign(name, lagm(df, i))
+    temp <- data.frame(temp, lagm(df, i)[,-1])
+  }
+  return(temp)
+}
+
+
+#create a list containing data frame with different number of steps of lags. We choose the range of 1 to 20 steps lags
+
+lag_list_gene <- function(df){
+  Lag_List <- list()
+  for (i in c(1:20)){
+  Lag_List[[i]] <- lag_gene(df, i)[-c(1:i),] ## here we use index to get rid of NA created by above steps.
+  }
+  return(Lag_List)
+}
+
+## A function that fits AR model for the data with number of steps we look back ranging from 1 to 20 and compare them in terms of testing accuracy with the last 20% of time.
+AR_logistic <- function(df){
+  acc <- c()
+  df <- lag_list_gene(df)
+    for (i in c(1:20)){
+      
+    # Prepare the training set(first 80% of rows) and testing set(the rest)
+      train_ind <- c(1:floor( 0.8 * nrow(df[[i]]) )  )
+      train <- df[[i]][train_ind, ]
+      test <- df[[i]][-train_ind, ]
+      
+      arfit <- glm(Y ~ ., data = train, family = "binomial")
+      arpred <- predict(arfit, test, type = "response")
+      arpred <- ifelse(arpred > 0.5, 1, 0) # The threshold might be improved by methods like ROC.
+      acc <- append(acc ,mean(arpred == test[, "Y"] ))
+    }
+  return(acc)
+} 
+
+
+
 ```
 
 
 
-```{r function for pca Matrix Mult By Hand}
+Functions for PCA
+```{r Functions for PCA}
 num_pc <- 25
 
 
@@ -44,29 +105,6 @@ pca_first_n <- function(df){
 # pca_first_n(Z_414)
 
 
-
-
-matrix(Z_416[,-c(1:3)], nrow = nrow(Z_416))
-
-
-aaa <- as.matrix(Z_416[,-c(1:3)])
-bbb <- as.matrix(pca_first_n(Z_416))
-
-temp <- aaa %*% bbb[, c(1:15)]
-
-
-bbb[, c(1:15)] %>% dim()
-aaa %>% dim()
-temp %>% dim()
-temp <- as.data.frame(cbind(Z_416[,1], temp))
-dimnames(temp)[[2]][1] <- "Y"
-
-temp %>% head()
-```
-
-
-
-```{r}
 # Function Input: dataframe of a mouse.
 # Function Output: dataframe of the mouse with first column the response, rest of columns the PC values.
 
@@ -81,27 +119,24 @@ PCA_wrangle <- function(df){
   dimnames(temp)[[2]][1] <- "Y"
   assign(name, temp,envir = globalenv())
 }
-
-
-
 ```
 
 
-AR 412
+
+Making the list for AR model with steps
 ```{r}
-Z_412_AR_List <- lag_list_gene(PCA_wrangle(Z_412))
+# Z_412_AR_List <- lag_list_gene(PCA_wrangle(Z_412))
+## Z_412_AR <-  as.data.frame(cbind(acc = AR_logistic(Z_412_PCA_15), steps = c(1:20))) # 50s
 
-Z_412_AR <-  as.data.frame(cbind(acc = AR_logistic(Z_412_PCA_15), steps = c(1:20))) # 50s
-
-Z_412_AR_List[[1]] %>% dim()
-Z_412_AR_List[[2]] %>% dim()
-Z_412_AR_List[[3]] %>% dim()
-Z_412_AR_List[[1]] %>% dim()
+# Z_412_AR_List[[1]] %>% dim()
+# Z_412_AR_List[[2]] %>% dim()
+# Z_412_AR_List[[3]] %>% dim()
+# Z_412_AR_List[[1]] %>% dim()
 
 ```
 
 
-temp
+Train the AR moddel for the following mice.
 ```{r}
 PCA_wrangle(Z_409)
 PCA_wrangle(Z_257)
@@ -109,20 +144,49 @@ PCA_wrangle(Z_274)
 PCA_wrangle(Z_258)
 PCA_wrangle(Z_251)
 PCA_wrangle(Z_412)
+PCA_wrangle(Z_416)
+PCA_wrangle(Z_418)
 
 
-temp <-  as.data.frame(cbind(acc = AR_logistic(Z_258_PCA_15), steps = c(1:20))) # 50s
+Z_416_AR <-  as.data.frame(cbind(acc = AR_logistic(Z_416_PCA_15), steps = c(1:20))) # 50s
+Z_257_AR <-  as.data.frame(cbind(acc = AR_logistic(Z_257_PCA_15), steps = c(1:20))) # 50s
+Z_274_AR <-  as.data.frame(cbind(acc = AR_logistic(Z_274_PCA_15), steps = c(1:20))) # 50s
+Z_258_AR <-  as.data.frame(cbind(acc = AR_logistic(Z_258_PCA_15), steps = c(1:20))) # 50s
+
+Z_251_AR <-  as.data.frame(cbind(acc = AR_logistic(Z_251_PCA_15), steps = c(1:20))) # 50s
+Z_412_AR <-  as.data.frame(cbind(acc = AR_logistic(Z_412_PCA_15), steps = c(1:20))) # 50s
+
+Z_418_AR <-  as.data.frame(cbind(acc = AR_logistic(Z_418_PCA_15), steps = c(1:20))) # 50s
 
 # Plot the relationship
-temp %>% 
-  ggplot(aes(x = steps, y = acc)) + 
-  geom_point() + 
-  geom_line() +
-  labs(title = "Prediction Accuracy vs Number of steps back", subtitle = "Z_258")
+
+plot_AR <- function(df_AR, ori_df){
+  yint <- max(mean(ori_df[,1]), 1 - mean(ori_df[,1]))
+  p1 <- df_AR %>% 
+    ggplot(aes(x = steps, y = acc)) + 
+    geom_point() + 
+    geom_line() +
+    labs(title = "acc vs steps", subtitle = deparse(substitute(df_AR)))  + 
+    geom_hline(yintercept = yint, col = "blue") +
+    ylim(c(0.4,1))
+    # geom_hline(yintercept = mean(ori_df$Y)
+  return(p1)
+}
+
+p1 <- plot_AR(df_AR = Z_416_AR, ori_df = Z_416)
+p2 <- plot_AR(df_AR = Z_257_AR, ori_df = Z_257)
+p3 <- plot_AR(df_AR = Z_274_AR, ori_df = Z_274)
+p4 <- plot_AR(df_AR = Z_258_AR, ori_df = Z_258)
+p5 <- plot_AR(df_AR = Z_251_AR, ori_df = Z_251)
+p6 <- plot_AR(df_AR = Z_412_AR, ori_df = Z_412)
+p7 <- plot_AR(df_AR = Z_418_AR, ori_df = Z_418)
+# p8 <- plot_AR(temp)
+
+ggarrange(p1, p2, p3, p4, p5, p6, ncol = 3, nrow = 2)
 
 
 
-
+# Train only on Z_416 and apply the model to other mice. ####
 
 AR_logistic111 <- function(df, test_df){
   acc <- c()
@@ -143,8 +207,7 @@ AR_logistic111 <- function(df, test_df){
   return(acc)
 } 
 
-
-lag_list_gene(Z_416_PCA_15)[[1]]
+# lag_list_gene(Z_416_PCA_15)[[1]]
 PCA_wrangle(Z_418)
 # PCA_wrangle(Z_416)
 temp <-  as.data.frame(cbind(acc = AR_logistic111(Z_416_PCA_15, test_df = Z_418_PCA_15), steps = c(1:20))) # 50s
@@ -152,91 +215,24 @@ temp1<-  as.data.frame(cbind(acc = AR_logistic(Z_418_PCA_15), steps = c(1:20))) 
 
 
 # Plot the relationship
-temp %>% 
+p8 <- temp %>% 
   ggplot(aes(x = steps, y = acc)) + 
   geom_point() + 
   geom_line() +
-  labs(title = "Prediction Accuracy vs Number of steps back", subtitle = "Z_418")
+  labs(title = "Prediction Accuracy vs Number of steps back", subtitle = "Z_418") +
+  geom_hline(yintercept = 0.8027255, col = "blue") +
+  ylim(c(0.4,1))
 
 
-temp1 %>% 
-  ggplot(aes(x = steps, y = acc)) + 
-  geom_point() + 
-  geom_line() +
-  labs(title = "Prediction Accuracy vs Number of steps back", subtitle = "Z_418")
+# temp1 %>% 
+#   ggplot(aes(x = steps, y = acc)) + 
+#   geom_point() + 
+#   geom_line() +
+#   labs(title = "Prediction Accuracy vs Number of steps back", subtitle = "Z_418")
 
 
+ggarrange(p7,p8, ncol = 2, nrow = 1)
 ```
-
-
-
-
-```{r}
-# This iterating fitting process takes around 1 minute on my laptop.
-Z_412_AR <-  as.data.frame(cbind(acc = AR_logistic(Z_412), steps = c(1:20))) # 50s
-Z_412_AR
-
-# Plot the relationship
-Z_412_AR %>% 
-  ggplot(aes(x = steps, y = acc)) + 
-  geom_point() + 
-  geom_line() +
-  labs(title = "Prediction Accuracy vs Number of steps back", subtitle = "Z_412")
-
-```
-
-
-```{r chunk5}
-pr.out1 <- prcomp(Z_412[,-c(1:3)])
-```
-
-
-```{r}
-names(pr.out1)
-```
-
-```{r}
-pr.out1$rotation
-```
-
-
-```{r}
-dim(pr.out1$x)
-
-
-```
-
-
-
-```{r}
-pr.out1$sdev
-
-```
-
-
-```{r}
-pr.var1 <- pr.out1$sdev^2
-pr.var1
-```
-
-
-```{r chunk14}
-pve1 <- pr.var1 / sum(pr.var1)
-pve
-sum(pve1[1:26])
-```
-
-
-
-
-
-
-```{r}
-aaa <- ls()
-
-aaa[-c("pve")]
-```
-
 
 
 
