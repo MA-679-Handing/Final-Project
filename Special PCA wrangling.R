@@ -1,4 +1,4 @@
-PCA_wrangle <- function(df){
+PCA_wrangle_sf <- function(df){
   name <- paste0(deparse(substitute(df)), "_PCA_", num_PC, "_sf")
   
   df <- df %>% mutate(time=row_number())
