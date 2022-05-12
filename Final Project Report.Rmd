@@ -1,0 +1,274 @@
+---
+title: "Report of MA679 Final Project"
+author: "Handing Zhang, Kosuke Sasaki, Kuangyou Chen"
+date: "2022/05/11"
+output:
+  pdf_document:
+    includes:
+      in_header: style.sty
+  html_document: default
+  word_document: default
+always_allow_html: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+source("Data_Wrangling.R")
+Sys.setenv("LANGUAGE" = "EN")
+Sys.setlocale("LC_ALL", "C")
+library(openxlsx)
+library(stringr)
+library(knitr)
+library(kableExtra)
+library(gridExtra)
+library(tidytext)
+pacman::p_load(ISLR2,keras,tidyverse,magrittr,ggplot2, ggpubr)
+```
+
+
+## Introduction
+
+The data set records the result of three various mouse experiments. The experiments of direct interaction and opposite sex use the same six mice, while the experiment that related to zero mazes adds seven more mice. With two additional data frames of mice in the folder, there are 27 data frames total and each of them represents a single mouse in certain experiments. As for dependent variables, every row contains exactly two binary responses and various numbers of independent normalized features. In addition, the time spent on behavior observation is not a constant number owing to test categories.
+
+The observation of our work by data manipulation and exploratory data analysis shows some missing values only in the D_409 dataset, which is a combination with the behavior record of No.409 mouse and relevant Z-score in direct interaction experiments. We believe that the missing values are not distributed randomly as it shows characteristics with periodic sequence. For all the normalized features in the dataset, no significant outliers are detected.
+
+What we attempted initially is to fit the Autoregressive(AR) logistic model as a baseline model to the dataset of Z_416(add why we choose Z-416), which shows normalized experiment features of the No.416 mouse. The dataset is split into the training set and test set sequentially, with a ratio of 8 to 2. All the 26 neurons are applied as predictors, with the lag equaling nature numbers from 1 to 20 to predict response.
+
+Furthermore, to make generalized model, we train the Recurrent Neural Network(RNN) with PCA based on Z-416 and fit the model to other mice. We also .
+
+ 
+## AR (baseline) Model
+
+
+## RNN Model
+### With normal PCA
+To make generalized model, we first apply Principal Component Analysis (PCA) to all the mice, by which we expect all the mice have similar and same number features.We picked up first 26 principal components for each mouse, which is the possible largest number of principal components each mouse can have in common. After applying PCA, we trained RNN on Z406 mouse. The RNN model has simple input layer with 10 units and one hidden layer with 2 units of Relu activation function, and output layer with 1 unit of Sigmoid activation function, and was trained in 400 epochs with 64 batch size. The trained RNN results are as follows. 
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+source("Special PCA wrangling.R")
+xdata <- data.matrix(Z_416_PCA_26[,-1])
+lagm <- function(x, k = 1) {
+  n <- nrow(x)
+  pad <- matrix(NA , k, ncol(x))
+  rbind(pad , x[1:(n - k), ])
+}
+arframe <- data.frame(Y = data.matrix(Z_416_PCA_26[,1]),
+                      L1 = lagm(xdata , 1), L2 = lagm(xdata , 2),
+                      L3 = lagm(xdata , 3), L4 = lagm(xdata , 4),
+                      L5 = lagm(xdata , 5)
+)
+arframe <- arframe[-(1:5),]
+n <- nrow(arframe)
+xrnn <- data.matrix(arframe[, -1])
+xrnn <- array(xrnn , c(n, 26, 5))
+xrnn <- xrnn[,, 5:1]
+xrnn <- aperm(xrnn , c(1, 3, 2))
+
+t<-round(0.8*nrow(xrnn))
+
+model <- keras_model_sequential() %>%
+  layer_simple_rnn(units = 10, ## number of steps we look back
+                   input_shape = list(5, 26),
+                   dropout = 0.2, recurrent_dropout = 0.2) %>%
+  layer_dense(units = 2, activation = "relu")%>%
+  layer_dense(units=1, activation="sigmoid")
+
+model %>% compile(optimizer = optimizer_rmsprop(),
+                  loss = "binary_crossentropy", metrics=c("accuracy"))
+
+history <- model %>% fit(
+  xrnn[1:t,, ], arframe[1:t, "Y"],
+  #    batch_size = 64, epochs = 200,
+  batch_size = 64, epochs = 400,
+  validation_data =
+    list(xrnn[-c(1:t),, ], arframe[-c(1:t), "Y"])
+)
+
+plot(history)
+
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+kpred <- predict(model, xrnn[-c(1:t) ,, ])>0.5
+m <- mean(abs(arframe[-c(1:t), 1] == as.numeric(kpred)))
+```
+Based on the plots above which show the training process of the RNN, the accuracy of  validation dataset converged on `r m`, which is almost same as the accuracy of AR model. 
+Next, we fit this RNN model to other mice data with 26 principal components. The accuracy of this model fitted to other mice datasets are as follows.
+
+
+```{r,echo=FALSE, message=FALSE, warning=FALSE}
+zlist <- list(Z_251_PCA_26,Z_257_PCA_26,Z_258_PCA_26,Z_274_PCA_26,Z_409_PCA_26,Z_412_PCA_26,Z_418_PCA_26)
+
+applyz416 <- function(x){
+xdata <- data.matrix(zlist[[x]][,-1])
+arframe <- data.frame(Y = data.matrix(zlist[[x]][,1]),
+                      L1 = lagm(xdata , 1), L2 = lagm(xdata , 2),
+                      L3 = lagm(xdata , 3), L4 = lagm(xdata , 4),
+                      L5 = lagm(xdata , 5)
+)
+arframe <- arframe[-(1:5),]
+n <- nrow(arframe)
+xrnn <- data.matrix(arframe[, -1])
+xrnn <- array(xrnn , c(n, 26, 5))
+xrnn <- xrnn[,, 5:1]
+xrnn <- aperm(xrnn , c(1, 3, 2))
+
+
+kpred <- predict(model, xrnn)>0.5
+mean(abs(arframe[, 1] == as.numeric(kpred)))
+}
+
+Accuracy <- vector()
+for (i in 1:7) {
+  Accuracy <- c(Accuracy,applyz416(i))
+}
+Mouse <- c("Z_251","Z_257","Z_258","Z_274","Z_409","Z_412","Z_418")
+table1 <- data.frame(Mouse,Accuracy)
+kable(table1) %>%
+  kable_styling(position = "center") %>%
+  kable_styling(latex_options = "HOLD_position")
+```
+
+As you can see, accuracy ranges from `r min(Accuracy)` to `r max(Accuracy)`, which seems to be by chance and most of them have accuracy similar to or much worse than just flipping a fair coin.
+
+We expected that the Principal Components of each mouse after applying PCA would have similar properties and contribute to mouse behavior to some extent in the same way, in which case we could predict mouse behavior by fitting a single RNN model to all the mice. However, it seems not be the case in our experiments, and Principal Components of each mouse may have each properties.  
+
+
+### The RNN with different PCA for Y=1 and Y=0
+In the previous section, a single PCA was applied to each mouse, but the Principal Components obtained from the PCA might not have similar distributions across mice. Therefore, we decided to fit a different PCA to each mouse for Y = 1 and 0 behaviors in the hope that this would increase the information Principal Components can explain and each mouse has similar distribtuions of Principal Components each other. The results are as below.
+
+
+
+```{r,echo=FALSE, message=FALSE, warning=FALSE}
+PCA_wrangle_sf <- function(df){
+  name <- paste0(deparse(substitute(df)), "_PCA_", num_PC, "_sf")
+  
+  df <- df %>% mutate(time=row_number())
+  df1<- filter(df, Y==1)
+  df0 <- filter(df, Y==0)
+  
+  a1 <- as.matrix(df1[, -c(1:3)])
+  b1 <- as.matrix(pca_first_n(df1))
+  
+  temp1 <- as.data.frame(cbind(df1[,1], a1 %*% b1[, c(1:num_PC)]))
+  dimnames(temp1)[[2]][1] <- "Y"
+  time <- df1[,"time"]
+  temp1 <- cbind(temp1,time)
+  
+  a0 <- as.matrix(df0[, -c(1:3)])
+  b0 <- as.matrix(pca_first_n(df0))
+  temp0 <- as.data.frame(cbind(df0[,1], a0 %*% b0[, c(1:num_PC)]))
+  dimnames(temp0)[[2]][1] <- "Y"
+  time <- df0[,"time"]
+  temp0 <- cbind(temp0,time)
+  
+  temp <- rbind(temp0,temp1)
+  temp <- temp[order(temp$time),]
+  rownames(temp) <- c(1:nrow(temp))
+  temp <- temp[,c(1:(ncol(temp)-1))]
+
+  assign(name, temp,envir = globalenv())
+  #return(name)
+}
+
+PCA_wrangle_sf(Z_251)
+PCA_wrangle_sf(Z_257)
+PCA_wrangle_sf(Z_258)
+PCA_wrangle_sf(Z_274)
+PCA_wrangle_sf(Z_409)
+PCA_wrangle_sf(Z_412)
+PCA_wrangle_sf(Z_416)
+PCA_wrangle_sf(Z_418)
+
+xdata <- data.matrix(Z_416_PCA_26_sf[,-1])
+arframe <- data.frame(Y = data.matrix(Z_416_PCA_26_sf[,1]),
+                      L1 = lagm(xdata , 1), L2 = lagm(xdata , 2),
+                      L3 = lagm(xdata , 3), L4 = lagm(xdata , 4),
+                      L5 = lagm(xdata , 5)
+)
+arframe <- arframe[-(1:5),]
+n <- nrow(arframe)
+xrnn <- data.matrix(arframe[, -1])
+xrnn <- array(xrnn , c(n, 26, 5))
+xrnn <- xrnn[,, 5:1]
+xrnn <- aperm(xrnn , c(1, 3, 2))
+
+t<-round(0.8*nrow(xrnn))
+
+model <- keras_model_sequential() %>%
+  layer_simple_rnn(units = 10, ## number of steps we look back
+                   input_shape = list(5, 26),
+                   dropout = 0.2, recurrent_dropout = 0.2) %>%
+  layer_dense(units = 2, activation = "relu")%>%
+  layer_dense(units=1, activation="sigmoid")
+
+model %>% compile(optimizer = optimizer_rmsprop(),
+                  loss = "binary_crossentropy", metrics=c("accuracy"))
+
+history <- model %>% fit(
+  xrnn[1:t,, ], arframe[1:t, "Y"],
+  #    batch_size = 64, epochs = 400,
+  batch_size = 64, epochs = 400,
+  validation_data =
+    list(xrnn[-c(1:t),, ], arframe[-c(1:t), "Y"])
+)
+plot(history)
+```
+When we trained the same RNN model on Z416 mouse with Principal Components obtained from the PCA applied separately to the observations with Y=1 and Y=0, we saw a dramatic improvement of the accuracy when fitting the model to validation dataset of Z416. The accuracy was almost 1. This is presumably because each of the Principal Components at Y = 1 and Y = 0 shows a specific distribution, and therefore the estimation by RNN is more accurate.  
+Then we fit this model to all the other mice, and the results are as follows.
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+zlistsf <- list(Z_251_PCA_26_sf,Z_257_PCA_26_sf,Z_258_PCA_26_sf,Z_274_PCA_26_sf,Z_409_PCA_26_sf,Z_412_PCA_26_sf,Z_418_PCA_26_sf)
+
+applyz416sf <- function(x){
+xdata <- data.matrix(zlistsf[[x]][,-1])
+arframe <- data.frame(Y = data.matrix(zlistsf[[x]][,1]),
+                      L1 = lagm(xdata , 1), L2 = lagm(xdata , 2),
+                      L3 = lagm(xdata , 3), L4 = lagm(xdata , 4),
+                      L5 = lagm(xdata , 5)
+)
+arframe <- arframe[-(1:5),]
+n <- nrow(arframe)
+xrnn <- data.matrix(arframe[, -1])
+xrnn <- array(xrnn , c(n, 26, 5))
+xrnn <- xrnn[,, 5:1]
+xrnn <- aperm(xrnn , c(1, 3, 2))
+
+
+kpred <- predict(model, xrnn)>0.5
+mean(abs(arframe[, 1] == as.numeric(kpred)))
+}
+
+Accuracy <- vector()
+for (i in 1:7) {
+Accuracy <- c(Accuracy,applyz416sf(i))
+}
+
+#Proportion of Y=1 in each mouse
+yprop <- function(x){
+mean(zlistsf[[x]][,1])
+}
+Proportion_of_Y1 <- vector()
+for (i in 1:7) {
+Proportion_of_Y1 <- c(Proportion_of_Y1,yprop(i))
+}
+
+table2 <- data.frame(Mouse,Accuracy,Proportion_of_Y1)
+kable(table2) %>%
+  kable_styling(position = "center") %>%
+  kable_styling(latex_options = "HOLD_position")
+
+```
+This time, we have some accuracy which seems not to be by chance compared to the proportion of Y=1 for each mouse, which are the ones of Z251 and Z418. The accuracy of the two are extremely high and low. Based on this results we can expect that by separating Y = 1 and Y = 0 when applying PCA, the distribution that Principal Components had for each mouse became very similar to or the opposite of the distribution of Principal Components for Z416, and it lead to the extremely high accuracy and low accuracy when the RNN fitted to Z251 and Z418. The other mice also show relatively high or low accuracy compared to the results when applying PCA without separating Y=1 and Y=0. These results suggest that we could compare the Principal Components obtained by applying PCA to the observed values of Y=1 and Y=0, and if the distribution is similar between mice, we can fit a generalized RNN model to the mice.
+
+## Conclusion
+For the AR model, we
+
+To create generalized model, we tried to train the RNN on Z416 Principal Components and fit it to all the mice with the same number of Principal Components, which have low accuracy across mice. However, when applying PCA by separating Y=1 and Y=0 observations in each mouse, the RNN model trained on Z416 has extremely high accuracy of the validation dataset when fitting it to M416 itself. Furthermore, the generalized RNN sometimes shows very high accuracy which suggests that we could make generalized RNN for the mice with similar Principal Components distributions.
+

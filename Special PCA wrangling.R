@@ -1,3 +1,40 @@
+#Normal PCA
+pca_first_n <- function(df){
+  pr.out <- prcomp(df[, -c(1:3)])
+  out1 <- pr.out$rotation 
+  
+  pr.var <- pr.out$sdev^2
+  pve <- pr.var / sum(pr.var)
+  # out2 <- pve
+  # 
+  # out3 <- sum(pve[1:num_pc])
+  # print(out1)
+  # print(out2)
+  # print(out3)
+  return(out1)
+} 
+
+num_PC <- 26
+
+PCA_wrangle <- function(df){
+  a <- as.matrix(df[, -c(1:3)])
+  b <- as.matrix(pca_first_n(df))
+  name <- paste0(deparse(substitute(df)), "_PCA_", num_PC)
+  temp <- as.data.frame(cbind(df[,1], a %*% b[, c(1:num_PC)]))
+  dimnames(temp)[[2]][1] <- "Y"
+  assign(name, temp,envir = globalenv())
+}
+
+PCA_wrangle(Z_409)
+PCA_wrangle(Z_257)
+PCA_wrangle(Z_274)
+PCA_wrangle(Z_258)
+PCA_wrangle(Z_251)
+PCA_wrangle(Z_412)
+PCA_wrangle(Z_416)
+PCA_wrangle(Z_418)
+
+#Special PCA
 PCA_wrangle_sf <- function(df){
   name <- paste0(deparse(substitute(df)), "_PCA_", num_PC, "_sf")
   
