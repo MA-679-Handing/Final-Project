@@ -181,6 +181,56 @@ rm(list= ls()[!(ls() %in% c("Data_1", "Data_2", "D_409", "D_412", "D_414", "D_41
 
 
 
+# Some necessary functions ####
+
+lagm <- function(x, k = 1) {
+  n <- nrow(x)
+  pad <- matrix(NA, k, ncol(x))
+  colnames(pad) <- colnames(x)
+  rbind(pad, x[1:(n - k), ])
+}
+
+# Make sure the input dataframe contains column "Y", our response!
+lag_gene <- function(df, L){
+  temp <- data.frame(Y = df[,"Y"])
+  for(i in c(1:L)){
+    # name <- paste0("L", i)
+    # assign(name, lagm(df, i))
+    temp <- data.frame(temp, lagm(df, i)[,-1])
+  }
+  return(temp)
+}
+
+
+lag_list_gene <- function(df){
+  Lag_List <- list()
+  for (i in c(1:20)){
+    Lag_List[[i]] <- lag_gene(df, i)[-c(1:i),] ## here we use index to get rid of NA created by above steps.
+  }
+  return(Lag_List)
+}
+
+
+## A function that fits AR model for the data with number of steps we look back ranging from 1 to 20 and compare them in terms of testing accuracy with the last 20% of time.
+AR_logistic <- function(df){
+  acc <- c()
+  df <- lag_list_gene(df)
+  for (i in c(1:20)){
+    
+    # Prepare the training set(first 80% of rows) and testing set(the rest)
+    train_ind <- c(1:floor( 0.8 * nrow(df[[i]]) )  )
+    train <- df[[i]][train_ind, ]
+    test <- df[[i]][-train_ind, ]
+    
+    arfit <- glm(Y ~ ., data = train, family = "binomial")
+    arpred <- predict(arfit, test, type = "response")
+    arpred <- ifelse(arpred > 0.5, 1, 0) # The threshold might be improved by methods like ROC.
+    acc <- append(acc ,mean(arpred == test[, "Y"] ))
+  }
+  return(acc)
+} 
+
+
 
 
 
